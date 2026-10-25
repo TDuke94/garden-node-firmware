@@ -1,0 +1,216 @@
+// Garden node wire format, version 1: protobuf messages.
+//
+// Carried on FPorts 2 (manifest), 3 (status) and 10 (commands and
+// responses), each after the one-byte frame header described in
+// wire-format.md. The data frame on FPort 1 is hand-specified and not
+// defined here.
+//
+// Kept minimal for LoRaWAN: every field number is below 16 so tags take
+// one byte, repeated scalars are packed, and fixed-size limits for nanopb
+// live in garden.options.
+
+syntax = "proto3";
+
+package garden.v1;
+
+enum Bus {
+  BUS_INTERNAL = 0;
+  BUS_SDI12 = 1;
+  BUS_ONEWIRE = 2;
+  BUS_MODBUS = 3;
+}
+
+enum ValueType {
+  VT_UNSPECIFIED = 0;
+  VT_U8 = 1;
+  VT_U16 = 2;
+  VT_I16 = 3;
+  VT_U32 = 4;
+  VT_I32 = 5;
+  VT_DEC = 6;
+}
+
+// FPort 2. A manifest may span several frames. Each frame carries a
+// Manifest message; concatenating the frames' messages in seq order is a
+// valid encoding of the whole manifest (protobuf merges repeated fields).
+message Manifest {
+  repeated Probe probes = 1;
+  // Present only in the last frame.
+  ManifestEnd end = 2;
+}
+
+// Probe entries with the same idx are merged by the hub, so a long ident
+// can travel in its own entry and frame.
+message Probe {
+  uint32 idx = 1;
+  Bus bus = 2;
+  uint32 port = 3;
+  // Internal: sensor id. SDI-12: ASCII address. 1-Wire: 8-byte ROM ID.
+  // Modbus: slave address.
+  bytes addr = 4;
+  repeated ValueType vtypes = 5;
+  // SDI-12 aI! response without the address and CRLF.
+  string ident = 6;
+  uint32 profile_id = 7;
+  fixed32 pack_crc = 8;
+}
+
+message ManifestEnd {
+  uint32 nprobes = 1;
+  uint32 nslots = 2;
+  uint32 nframes = 3;
+}
+
+// FPort 3.
+message Status {
+  Firmware firmware = 1;
+  Reset reset = 2;
+  uint32 uptime_s = 3;
+  repeated BusErrors bus_errors = 4;
+  Config config = 5;
+  Power power = 6;
+}
+
+message Firmware {
+  uint32 major = 1;
+  uint32 minor = 2;
+  uint32 patch = 3;
+  // First 8 hex digits of the commit.
+  fixed32 git = 4;
+  // MCUboot image slot.
+  uint32 slot = 5;
+  fixed32 pack_crc = 6;
+}
+
+enum ResetCause {
+  RESET_UNKNOWN = 0;
+  RESET_POWER_ON = 1;
+  RESET_BROWN_OUT = 2;
+  RESET_WATCHDOG = 3;
+  RESET_SOFTWARE = 4;
+  RESET_PIN = 5;
+}
+
+message Reset {
+  ResetCause cause = 1;
+  // Resets since provisioning.
+  uint32 count = 2;
+}
+
+// Counts since the previous status.
+message BusErrors {
+  Bus bus = 1;
+  uint32 port = 2;
+  uint32 timeouts = 3;
+  uint32 bad_frames = 4;
+}
+
+message Config {
+  uint32 interval_min = 1;
+  uint32 mgen = 2;
+  // Sets waiting to send.
+  uint32 queue_depth = 3;
+}
+
+message Power {
+  uint32 battery_mv = 1;
+  // Lowest under radio load since the previous status.
+  uint32 min_mv = 2;
+}
+
+// FPort 10 downlink. Also the payload of NFC command records and of the
+// bench shell's "garden cmd".
+message Commands {
+  repeated Command cmds = 1;
+}
+
+message Command {
+  uint32 seq = 1;
+  oneof op {
+    SetInterval set_interval = 2;
+    Rescan rescan = 3;
+    SendManifest send_manifest = 4;
+    SendStatus send_status = 5;
+    Sdi12SetAddr sdi12_set_addr = 6;
+    ModbusDefine modbus_define = 7;
+    ProbeRemove probe_remove = 8;
+    SetWarmup set_warmup = 9;
+    Backfill backfill = 10;
+    Reboot reboot = 11;
+    // Development firmware only; production builds answer NOT_PERMITTED.
+    Debug debug = 15;
+  }
+}
+
+message SetInterval {
+  // 5 to 1440.
+  uint32 minutes = 1;
+}
+
+message Rescan {
+  // Bit n set rescans the bus with Bus value n.
+  uint32 bus_mask = 1;
+}
+
+message SendManifest {}
+
+message SendStatus {}
+
+message Sdi12SetAddr {
+  uint32 port = 1;
+  // Single ASCII characters.
+  uint32 from = 2;
+  uint32 to = 3;
+}
+
+message ModbusDefine {
+  uint32 port = 1;
+  uint32 addr = 2;
+  uint32 profile_id = 3;
+}
+
+message ProbeRemove {
+  uint32 idx = 1;
+}
+
+message SetWarmup {
+  uint32 port = 1;
+  uint32 ms = 2;
+}
+
+message Backfill {
+  uint32 from_age_s = 1;
+  uint32 to_age_s = 2;
+}
+
+message Reboot {
+  // Must be 0xB007.
+  uint32 magic = 1;
+}
+
+message Debug {
+  uint32 op = 1;
+  bytes payload = 2;
+}
+
+enum Result {
+  RESULT_OK = 0;
+  RESULT_BAD_ARGS = 1;
+  RESULT_BUSY = 2;
+  RESULT_UNSUPPORTED = 3;
+  RESULT_BUS_ERROR = 4;
+  RESULT_NOT_PERMITTED = 5;
+}
+
+// FPort 10 uplink.
+message Responses {
+  repeated Response responses = 1;
+}
+
+message Response {
+  uint32 seq = 1;
+  Result result = 2;
+  // Set by ModbusDefine.
+  uint32 probe_idx = 3;
+  bytes data = 4;
+}

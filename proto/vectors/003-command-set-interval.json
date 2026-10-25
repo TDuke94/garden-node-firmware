@@ -1,0 +1,12 @@
+{
+  "id": "003",
+  "description": "Downlink: set the sample interval to 30 minutes, seq 1",
+  "fport": 10,
+  "direction": "down",
+  "payload_hex": "10 0A 06 08 01 12 02 08 1E",
+  "decoded": {
+    "version": 1,
+    "message": "garden.v1.Commands",
+    "body": { "cmds": [ { "seq": 1, "set_interval": { "minutes": 30 } } ] }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "id": "004",
+  "description": "Uplink response to vector 003: seq 1, RESULT_OK (the zero-valued result is omitted on the wire)",
+  "fport": 10,
+  "direction": "up",
+  "payload_hex": "10 0A 02 08 01",
+  "decoded": {
+    "version": 1,
+    "message": "garden.v1.Responses",
+    "body": { "responses": [ { "seq": 1, "result": "RESULT_OK" } ] }
+  }
+}

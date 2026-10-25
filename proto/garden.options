@@ -1,0 +1,12 @@
+# nanopb limits for garden.proto. Sizes are bounded so the node encodes
+# and decodes with static buffers and no heap.
+
+garden.v1.Manifest.probes        max_count:16
+garden.v1.Probe.addr             max_size:8
+garden.v1.Probe.vtypes           max_count:8
+garden.v1.Probe.ident            max_size:36
+garden.v1.Status.bus_errors      max_count:8
+garden.v1.Commands.cmds          max_count:8
+garden.v1.Debug.payload          max_size:48
+garden.v1.Responses.responses    max_count:8
+garden.v1.Response.data          max_size:32
