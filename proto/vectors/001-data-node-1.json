@@ -1,0 +1,23 @@
+{
+  "id": "001",
+  "description": "node-1 data frame: battery, DS18B20 air temperature, two-value SDI-12 soil probe, sampled at send time",
+  "fport": 1,
+  "manifest": "002",
+  "payload_hex": "10 07 00 0F 1C 0E EC FF A1 1D 92 3C",
+  "decoded": {
+    "version": 1,
+    "flags": { "backlog": false },
+    "mgen": 7,
+    "sets": [
+      {
+        "age_s": 0,
+        "values": [
+          { "slot": 0, "type": "u16", "raw": 3612 },
+          { "slot": 1, "type": "i16", "raw": -20 },
+          { "slot": 2, "type": "dec", "mantissa": 234, "places": 1 },
+          { "slot": 3, "type": "dec", "mantissa": 481, "places": 2 }
+        ]
+      }
+    ]
+  }
+}
