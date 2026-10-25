@@ -1,0 +1,17 @@
+{
+  "id": "002",
+  "description": "node-1 manifest, single frame, no IDENT records: internal battery, one DS18B20 on port 1, SDI-12 address '0' on port 2 with two values",
+  "fport": 2,
+  "payload_hex": "10 07 00 01 07 00 00 00 01 01 01 02 01 0E 01 02 01 08 28 FF 4A 1B 61 16 03 1A 01 03 01 08 02 01 02 01 30 02 06 06 0F 04 03 04 F6 48",
+  "decoded": {
+    "version": 1,
+    "mgen": 7,
+    "seq": 0,
+    "probes": [
+      { "idx": 0, "bus": "internal", "port": 0, "addr_hex": "01", "vtypes": ["u16"] },
+      { "idx": 1, "bus": "1-wire", "port": 1, "addr_hex": "28FF4A1B6116031A", "vtypes": ["i16"] },
+      { "idx": 2, "bus": "sdi-12", "port": 2, "addr_hex": "30", "vtypes": ["dec", "dec"] }
+    ],
+    "end": { "nprobes": 3, "nslots": 4, "crc": "0x48F6", "crc_valid": true }
+  }
+}
